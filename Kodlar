@@ -1,0 +1,223 @@
+data<-read.table("C:/Users/stat/Desktop/veri.txt")
+
+names(veri)
+
+
+attach(veri)
+
+x4<-as.factor(x4)
+
+qqnorm(y)
+
+qqline(y)
+
+library(nortest)
+
+lillie.test(y)
+
+lny<-log(y)
+
+qqnorm(lny)
+
+qqline(lny)
+
+lillie.test(lny)
+
+datayeni<-cbind(x1,x2,x3,x4,lny)
+
+pairs(datayeni)
+
+sonuc<-lm(lny~x1+x2+x3+x4)
+
+summary(sonuc)
+
+influence.measures(sonuc) #“Aykırı değerler ile ilgili kod”
+
+inf<-ls.diag(sonuc) # “Aykırı değerler ile ilgili kod”
+
+inf
+
+par(mfrow=c(2,2)) # “Grafik çizimi ile ilgili kod”
+
+plot(predict(sonuc), inf$stud.res, ylab="Studentized Residuals", xlab="Predicted Value")
+
+
+#Aykırı değer incelemesi için grafiklerin çizimi
+
+library(zoo) #index fonksiyonu için paket
+
+cooksd <- cooks.distance(sonuc)
+
+plot(cooksd, pch="*", cex=2, main="Influential Obs by Cooks distance")
+
+abline(h = if (length(data$y)>50) 4/length(data$y) else 4/(length(data$y)-(length(data)-1)-1) , col="red")
+
+text(x=1:length(cooksd)+1, y=cooksd, labels=ifelse(cooksd>if (length(data$y)>50) 4/length(data$y) else 4/(length(data$y)-(length(data)-1)-1),names(cooksd),""), col="red")
+
+hat<-inf$hat
+
+plot(hat, pch="*", cex=2, main="Leverage Value by Hat value")
+
+abline(h = 2*length(data)/length(y) , col="red")
+
+text(x=1:length(hat)+1, y=hat, labels=ifelse(hat>2*length(data)/length(y),index(hat),""), col="red")
+
+stud<-inf$stud.res
+
+plot(stud, pch="*", cex=2, main="Outlier by Studentized residuals",ylab="Studentized Residuals", xlab="Index")
+
+abline(h = c(-3,3) ,col="red")
+
+text(x=1:length(stud)+1, y=stud, labels=ifelse(stud<-3 & stud>3,index(stud),""), col="red")
+
+std<-inf$std.res
+
+plot(std, pch="*", cex=2, main="Outlier by Standardized residuals",ylab="Standardized Residuals", xlab="Index")
+
+abline(h = c(-2,2) ,col="red")
+
+text(x=1:length(std)+1, y=std, labels=ifelse(std<-2 & std>2,index(std),""), col="red")
+
+#ARTIKLARI ÇIKARIP 44 VERİ ÜZERİNDEN TESTLERİMZE DEVAM EDİYORUZ
+
+data<-read.table("C:/User/stat/Desktop/merve.txt")
+
+names(merve)
+
+
+attach(merve)
+
+x4<-as.factor(x4)
+
+qqnorm(y)
+
+qqline(y)
+
+library(nortest)
+
+shapiro.test(y)
+
+
+lny<-log(y)
+
+shapiro.test(lny)
+
+qqnorm(lny)
+
+qqline(lny)
+
+
+datayeni<-cbind(x1,x2,x3,x4,lny)
+
+pairs(datayeni)
+
+sonuc<-lm(lny~x1+x2+x3+x4)
+
+summary(sonuc)
+
+?	influence.measures(sonuc)
+?	inf<-ls.diag(sonuc)
+?	inf
+
+
+#Değişen varyanslılık sorunu
+
+summary(lm(abs(residuals(sonuc)) ~ fitted(sonuc)))
+
+Breusch ve Pagan Testi
+
+“lmtest package yükle”
+
+library(lmtest)
+
+bptest(sonuc) #« Breusch ve Pagan testi » Değişen varyanslılık testi
+
+Özilişki sorunu
+
+dwtest(sonuc) #« Durbin-watson testi »
+
+Çoklubağlantı sorunu
+
+“car package yükle” #installdan yükle car paketini öyle çalıştır
+
+library(car)
+
+vif(sonuc) 
+
+“perturb paketini yükleyin” #installdan pertub paketini yükle önce 
+library("perturb", lib.loc = "~/r/win-library/3.4")
+
+colldiag(sonuc) # “burada nitele çok dikkat et ses kaydını dinle  Koşul sayıları ve varyans bozulum oranları”
+
+Özdeğer ve özvektörlerin bulunması
+
+ort1<-mean(x1)
+
+kt1<-sum((x1-ort1)^2)
+
+skx1<-(x1-ort1)/(kt1^0.5)
+
+ort2<-mean(x2)
+
+kt2<-sum((x2-ort2)^2)
+
+skx2<-(x2-ort2)/(kt2^0.5)
+
+ort3<-mean(x3)
+
+kt3<-sum((x3-ort3)^2)
+
+skx3<-(x3-ort3)/(kt3^0.5)
+
+
+x<-cbind(skx1,skx2,skx3)
+
+sm<- eigen(t(x)%*%x) 
+
+signif(sm$values,3) #"lamda1=3,8" "lamda2=0,124" "lamda3=0,0789" "lamda4=0,000674" toplamişrareti(1/lamda)>k ise güçlü çoklu bağıntı vardır. 0 a yakın özdeğer kadar güçlü çoklu bağıntı vardır.
+
+signif(sm$vectors,3) #denklem yazarsak (0,712x1-0,701x3=0)
+
+V<-sm$vectors
+
+t(V)%*%V
+
+V %*% diag(sm$values) %*% t(V)
+
+#ön kestirim ve uyum kestirimi
+
+new.speeds<-merve[7.436332:9,152636]
+
+predict(sonuc, newdata = new.speeds)
+
+new.prt <- data.frame(x1=20,x2=5,x3=15,x4=1)
+new.prt$x4<-as.factor(new.prt$x4)
+predict(sonuc, newdata= new.prt)
+
+#güven aralıkları
+predict(sonuc, newdata=new.speeds, interval = "prediction")
+predict(sonuc, newdata = new.prt, interval = "prediction")
+
+#regresyon için güven aralıkları 
+
+confint(sonuc,level = .95)
+
+#en iyi modelin bulunması
+
+## Forward selection
+
+library(stats)
+
+lm.null <- lm(lny ~ 1)
+
+forward <- step(lm.null,lny~x1+x2+x3, direction = "forward")
+
+forward
+
+summary(forward)
+
+## Backward elimination
+
+backward<-step(sonuc,direction="backward")
+
+summary(backward)
